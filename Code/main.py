@@ -1,10 +1,31 @@
-import os
-import File_Reader as fr
-from Disease_Record import Disease_Record
-import Data_Filter as df
-import Plot_Maker as pm
-import Sentinel as sn
+"""
+main.py
+-------
+Entry point for the Chronic Disease Indicators analysis project.
 
+Pulls together every other module via a text menu so the user can
+load data, search, filter, sort, view statistics, plot charts,
+and export reports — all from one place.
+
+Run with:    python3 main.py
+"""
+
+import os
+
+from File_Reader import load_records, File_Path
+from Disease_Record import Disease_Record
+import Data_Filter
+import Plot_Maker
+import Sentinel
+
+
+# Default file name. Can be overridden when the user starts the program.
+DEFAULT_CSV = File_Path
+
+
+# ─────────────────────────────────────────────────────────────
+# MENU PRINTING
+# ─────────────────────────────────────────────────────────────
 
 def print_main_menu():
     print()
@@ -39,69 +60,68 @@ def print_viz_menu():
 # MENU ACTIONS
 # ─────────────────────────────────────────────────────────────
 
-def show_summary(data_frame, records):
+def show_summary(df, records):
     """Quick overview of what was loaded."""
     print()
     print(f"  Total valid records loaded : {len(records)}")
     print(f"  Years covered              : "
-          f"{data_frame['year'].min()} - {data_frame['year'].max()}")
-    print(f"  Unique states / locations  : {data_frame['state'].nunique()}")
-    print(f"  Unique topics              : {data_frame['topic'].nunique()}")
+          f"{df['year'].min()} - {df['year'].max()}")
+    print(f"  Unique states / locations  : {df['state'].nunique()}")
+    print(f"  Unique topics              : {df['topic'].nunique()}")
     print()
     print("  Top 5 topics by record count:")
-    for topic, count in df.topic_counts(data_frame).head(5).items():
+    for topic, count in Data_Filter.topic_counts(df).head(5).items():
         print(f"    - {topic}: {count}")
 
 
 def action_search_state(records):
-    query = sn.ask_text("  Enter state name (or part of it): ")
-    results = df.search_by_state(records, query)
+    query = Sentinel.ask_text("  Enter state name (or part of it): ")
+    results = Data_Filter.search_by_state(records, query)
     print(f"\n  Found {len(results)} matching records.")
-    sn.print_records_table(results)
+    Sentinel.print_records_table(results)
     return results
 
 
 def action_search_topic(records):
-    query = sn.ask_text("  Enter topic (e.g. Diabetes, Cancer): ")
-    results = df.search_by_topic(records, query)
+    query = Sentinel.ask_text("  Enter topic (e.g. Diabetes, Cancer): ")
+    results = Data_Filter.search_by_topic(records, query)
     print(f"\n  Found {len(results)} matching records.")
-    sn.print_records_table(results)
+    Sentinel.print_records_table(results)
     return results
 
 
 def action_filter_year(records):
-    y1 = sn.ask_int("  Start year: ", min_value=1900, max_value=2100)
-    y2 = sn.ask_int("  End year:   ", min_value=y1, max_value=2100)
-    results = df.filter_by_year_range(records, y1, y2)
+    y1 = Sentinel.ask_int("  Start year: ", min_value=1900, max_value=2100)
+    y2 = Sentinel.ask_int("  End year:   ", min_value=y1, max_value=2100)
+    results = Data_Filter.filter_by_year_range(records, y1, y2)
     print(f"\n  {len(results)} records in {y1}–{y2}.")
-    sn.print_records_table(results)
+    Sentinel.print_records_table(results)
     return results
 
 
 def action_filter_value(records):
     print("  Press Enter to leave a bound blank.")
-    lo = sn.ask_float("  Minimum value: ", allow_blank=True)
-    hi = sn.ask_float("  Maximum value: ", allow_blank=True)
-    results = df.filter_by_value_threshold(records, lo, hi)
+    lo = Sentinel.ask_float("  Minimum value: ", allow_blank=True)
+    hi = Sentinel.ask_float("  Maximum value: ", allow_blank=True)
+    results = Data_Filter.filter_by_value_threshold(records, lo, hi)
     print(f"\n  {len(results)} records match the value range.")
-    sn.print_records_table(results)
+    Sentinel.print_records_table(results)
     return results
 
 
 def action_top_n(records):
-
-    number = sn.ask_int("  How many records (N)? ", min_value=1, max_value=200)
+    n = Sentinel.ask_int("  How many records (N)? ", min_value=1, max_value=200)
     print("  Sort by: 1=value  2=year  3=state  4=topic")
-    choice = sn.ask_int("  Choice: ", min_value=1, max_value=4)
-    desc = sn.ask_yes_no("  Descending order? (y/n) ")
+    choice = Sentinel.ask_int("  Choice: ", min_value=1, max_value=4)
+    desc = Sentinel.ask_yes_no("  Descending order? (y/n) ")
     key_map = {1: "value", 2: "year", 3: "state", 4: "topic"}
-    results = df.top_n(records, n=number, by=key_map[choice], descending=desc)
-    sn.print_records_table(results, max_rows=number)
+    results = Data_Filter.top_n(records, n=n, by=key_map[choice], descending=desc)
+    Sentinel.print_records_table(results, max_rows=n)
     return results
 
 
 def action_statistics(records):
-    stats = df.basic_statistics(records)
+    stats = Data_Filter.basic_statistics(records)
     print()
     print("  Basic statistics for the current record set:")
     for key, value in stats.items():
@@ -111,12 +131,10 @@ def action_statistics(records):
             print(f"    {key:<8} : {value}")
 
 
-
-
-def action_visualizations(data_frame, records):
+def action_visualizations(df, records):
     while True:
         print_viz_menu()
-        choice = sn.ask_int("  Choice: ", min_value=0, max_value=5)
+        choice = Sentinel.ask_int("  Choice: ", min_value=0, max_value=5)
 
         if choice == 0:
             return
@@ -124,7 +142,7 @@ def action_visualizations(data_frame, records):
         # All charts (except pie) accept an optional topic filter
         topic = ""
         if choice in (1, 2, 3, 5):
-            topic = sn.ask_text(
+            topic = Sentinel.ask_text(
                 "  Filter to a topic? (blank = all data): ",
                 allow_blank=True
             )
@@ -132,76 +150,90 @@ def action_visualizations(data_frame, records):
         topic_label = topic if topic else "All Topics"
 
         if choice == 1:
-            state_means = df.average_value_by_state(data_frame, topic or None)
-            pm.BarChart_States(state_means, topic_label)
+            # Bar chart needs the raw DataFrame so it can split by unit.
+            sub_df = df.copy()
+            if topic:
+                sub_df = sub_df[sub_df["topic"].str.contains(
+                    topic, case=False, na=False)]
+            Plot_Maker.bar_chart_top_states(sub_df, topic_label)
 
         elif choice == 2:
-            year_means = df.average_value_by_year(data_frame, topic or None)
-            pm.Line_Chart_Years(year_means, topic_label)
+            sub_df = df.copy()
+            if topic:
+                sub_df = sub_df[sub_df["topic"].str.contains(
+                    topic, case=False, na=False)]
+            Plot_Maker.line_chart_over_years(sub_df, topic_label)
 
         elif choice == 3:
-            filtered = (df.search_by_topic(records, topic)
+            filtered = (Data_Filter.search_by_topic(records, topic)
                         if topic else records)
-            pm.Histogram_Values(filtered, topic_label)
+            Plot_Maker.histogram_of_values(filtered, topic_label)
 
         elif choice == 4:
-            counts = df.topic_counts(data_frame)
-            pm.Pie_Chart(counts)
+            counts = Data_Filter.topic_counts(df)
+            Plot_Maker.pie_chart_topic_share(counts)
 
         elif choice == 5:
-            filtered = (df.search_by_topic(records, topic)
+            filtered = (Data_Filter.search_by_topic(records, topic)
                         if topic else records)
-            pm.Scatter_Year_Value(filtered, topic_label)
+            Plot_Maker.scatter_year_vs_value(filtered, topic_label)
 
 
+# ─────────────────────────────────────────────────────────────
+# PROGRAM ENTRY POINT
+# ─────────────────────────────────────────────────────────────
 
-
-
-
+def get_csv_path():
+    print()
+    print("Welcome to the Chronic Disease Indicators analyser.")
+    path = input(
+        f"  Path to CSV (Enter for default '{DEFAULT_CSV}'): "
+    ).strip()
+    return path if path else DEFAULT_CSV
 
 
 def main():
-    csv_path = fr.get_file()
+    csv_path = get_csv_path()
+
+    if not os.path.exists(csv_path):
+        print(f"  ERROR: file not found: {csv_path}")
+        return
 
     print(f"\n  Loading {csv_path} ... (this may take a few seconds)")
 
     try:
-        data_frame, records = fr.load_records()
+        df, records = load_records(csv_path)
     except Exception as e:
         print(f"  ERROR while loading: {e}")
         return
 
     print(f"  Loaded {len(records)} valid records.")
-
-    # `current_records` is the working set — search/filter results
-    # become the new working set so the user can chain operations.
     current_records = records
 
     while True:
         print_main_menu()
         print(f"  Current working set : {len(current_records)} records")
-        choice = sn.ask_int("  Choice: ", min_value=0, max_value=9)
+        choice = Sentinel.ask_int("  Choice: ", min_value=0, max_value=9)
 
         if choice == 0:
             print("\n  Goodbye!")
             break
         elif choice == 1:
-            show_summary(data_frame, records)
+            show_summary(df, records)
         elif choice == 2:
-            action_search_state(records)
+            current_records = action_search_state(records)
         elif choice == 3:
-            action_search_topic(records)
+            current_records = action_search_topic(records)
         elif choice == 4:
-            action_filter_year(current_records)
+            current_records = action_filter_year(current_records)
         elif choice == 5:
-            action_filter_value(current_records)
+            current_records = action_filter_value(current_records)
         elif choice == 6:
-            action_top_n(current_records)
+            current_records = action_top_n(current_records)
         elif choice == 7:
             action_statistics(current_records)
         elif choice == 8:
-            action_visualizations(data_frame, current_records)
-
+            action_visualizations(df, current_records)
 
 
 if __name__ == "__main__":

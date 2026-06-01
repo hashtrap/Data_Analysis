@@ -4,9 +4,9 @@ import sys
 
 from Disease_Record import *
 
-File_Path="..\\Data\\U.S._Chronic_Disease_Indicators.csv"
+File_Path = "..\\Data\\U.S._Chronic_Disease_Indicators.csv"
 
-COLUMNS=[
+COLUMNS = [
     "YearStart",
     "LocationDesc",
     "Topic",
@@ -17,29 +17,31 @@ COLUMNS=[
     "Stratification1",
 ]
 
-def verify_file()->bool:
 
-    if not(os.path.exists(File_Path)):
+def verify_file(path=File_Path) -> bool:
+
+    if not (os.path.exists(path)):
         return False
     else:
         return True
 
-def get_file():
 
-    if verify_file():
-        return File_Path
+def get_file(path=File_Path):
+
+    if verify_file(path):
+        return path
     else:
         sys.exit("Programm shut down because file doesn't exist :)")
 
 
 def load_dataframe(csv):
 
-    if not verify_file():
+    if not verify_file(csv):
         sys.exit("Programm shut down because file doesn't exist :)")
 
-    data_frame=pd.read_csv(csv,low_memory=False)
+    data_frame = pd.read_csv(csv, low_memory=False)
 
-    needed_columns=[c for c in COLUMNS if c in data_frame.columns]
+    needed_columns = [c for c in COLUMNS if c in data_frame.columns]
     data_frame = data_frame[needed_columns].copy()
 
 
@@ -63,12 +65,13 @@ def load_dataframe(csv):
         "Stratification1": "stratification",
     })
 
-    data_frame=data_frame.reset_index(drop=True)
+    data_frame = data_frame.reset_index(drop=True)
     return data_frame
+
 
 def dataframe_to_records(df):
 
-    records=[]
+    records = []
 
     for _, row in df.iterrows():
         record = Disease_Record(
@@ -85,19 +88,15 @@ def dataframe_to_records(df):
             records.append(record)
     return records
 
-def load_records():
-    """
-    Convenience function: read CSV and return both the DataFrame
-    AND the list of DiseaseRecord objects.
 
-    Returns:
-        (DataFrame, list_of_DiseaseRecord)
-    """
-    df = load_dataframe(File_Path)
+def load_records(csv_path=None):
+
+    path = csv_path if csv_path else File_Path
+    df = load_dataframe(path)
     records = dataframe_to_records(df)
     return df, records
 
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     get_file()

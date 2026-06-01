@@ -1,5 +1,3 @@
-
-
 class Disease_Record:
 
     def __init__(self, year, state, topic, question, data_value,
@@ -31,10 +29,10 @@ class Disease_Record:
 
     def __str__(self):
         if self.is_valid():
-            text=f"{self.data_value:.2f} {self.data_value_unit:2f} {self.data_value_type}"
+            text = f"{self.data_value:.2f} {self.data_value_unit} {self.data_value_type}"
         else:
-            text="No Data"
+            text = "No Data"
         return (f"[{self.year}] {self.state} | {self.topic} | "
                 f"{self.stratification} -> {text}")
 
-
+    
