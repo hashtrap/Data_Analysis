@@ -19,7 +19,6 @@ def print_main_menu():
     print("  6. Top N records (sorted)")
     print("  7. Basic statistics")
     print("  8. Visualizations")
-    print("  9. Save report to file")
     print("  0. Exit")
     print("============================================")
 
@@ -110,8 +109,7 @@ def action_statistics(records):
             print(f"    {key:<8} : {value:.3f}")
         else:
             print(f"    {key:<8} : {value}")
-    if sn.ask_yes_no("\n  Save statistics to a file? (y/n) "):
-        fname = sn.ask_text("  Filename (e.g. stats.txt): ")
+
 
 
 

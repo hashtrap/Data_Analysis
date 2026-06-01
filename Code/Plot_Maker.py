@@ -5,7 +5,7 @@ def BarChart_States(state_means,topic_label,top_n=10):
 
     top=state_means.head(top_n)
 
-    fig,ax=plt.subplot(figsize=(10,6))
+    fig,ax=plt.subplots(figsize=(10,6))
     ax.bar(top.index,top.values,color='blue',edgecolor='black')
 
     ax.set_title(f"Top {top_n} States by Average Value — {topic_label}")
