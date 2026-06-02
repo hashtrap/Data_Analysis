@@ -35,4 +35,14 @@ class Disease_Record:
         return (f"[{self.year}] {self.state} | {self.topic} | "
                 f"{self.stratification} -> {text}")
 
-    
+    def to_dict(self):
+        return {
+            "year": self.year,
+            "state": self.state,
+            "topic": self.topic,
+            "question": self.question,
+            "stratification": self.stratification,
+            "data_value": self.data_value,
+            "data_value_unit": self.data_value_unit,
+            "data_value_type": self.data_value_type,
+        }

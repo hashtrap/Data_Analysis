@@ -1,1 +1,4 @@
 files/
+*.json
+*.csv
+*.txt

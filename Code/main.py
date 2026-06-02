@@ -1,21 +1,9 @@
-"""
-main.py
--------
-Entry point for the Chronic Disease Indicators analysis project.
-
-Pulls together every other module via a text menu so the user can
-load data, search, filter, sort, view statistics, plot charts,
-and export reports — all from one place.
-
-Run with:    python3 main.py
-"""
-
 import os
 
 from File_Reader import load_records, File_Path
-from Disease_Record import Disease_Record
 import Data_Filter
 import Plot_Maker
+import File_Writer
 import Sentinel
 
 
@@ -40,6 +28,7 @@ def print_main_menu():
     print("  6. Top N records (sorted)")
     print("  7. Basic statistics")
     print("  8. Visualizations")
+    print("  9. Save report to file")
     print("  0. Exit")
     print("============================================")
 
@@ -129,6 +118,9 @@ def action_statistics(records):
             print(f"    {key:<8} : {value:.3f}")
         else:
             print(f"    {key:<8} : {value}")
+    if Sentinel.ask_yes_no("\n  Save statistics to a file? (y/n) "):
+        fname = Sentinel.ask_text("  Filename (e.g. stats.txt): ")
+        File_Writer.save_statistics(fname, stats)
 
 
 def action_visualizations(df, records):
@@ -177,6 +169,23 @@ def action_visualizations(df, records):
             filtered = (Data_Filter.search_by_topic(records, topic)
                         if topic else records)
             Plot_Maker.scatter_year_vs_value(filtered, topic_label)
+
+
+def action_save_report(records):
+    if not records:
+        print("  No records to save.")
+        return
+
+    print("  Save format: 1=txt  2=csv  3=json")
+    fmt = Sentinel.ask_int("  Choice: ", min_value=1, max_value=3)
+    fname = Sentinel.ask_text("  Filename (with extension): ")
+
+    if fmt == 1:
+        File_Writer.save_report_txt(fname, records, title="Chronic Disease Report")
+    elif fmt == 2:
+        File_Writer.save_report_csv(fname, records)
+    elif fmt == 3:
+        File_Writer.save_report_json(fname, records)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -234,6 +243,8 @@ def main():
             action_statistics(current_records)
         elif choice == 8:
             action_visualizations(df, current_records)
+        elif choice == 9:
+            action_save_report(current_records)
 
 
 if __name__ == "__main__":
